@@ -2,7 +2,15 @@
 import { reactive, computed, onMounted, nextTick } from 'vue'
 import { mapCfg } from '@/configs/map'
 import useMap from '@/hooks/useMap'
-const { initMap, getMap, get3dEnabled, set3dEnabled } = useMap()
+import VectorLayer from 'ol/layer/Vector'
+import VectorSource from 'ol/source/Vector'
+import Style from 'ol/style/Style'
+import Fill from 'ol/style/Fill'
+import Stroke from 'ol/style/Stroke'
+
+import { geojsonURLs, tilesetURLs } from '@/configs/map'
+
+const { initMap, getMap, get3dEnabled, set3dEnabled, getOlLayerByName, loadGeojsonToOlMap } = useMap()
 
 let map
 
@@ -20,7 +28,28 @@ const changeDimension = () => {
 	})
 }
 const clearAllData = () => {}
-const load2dData = () => {}
+const load2dData = () => {
+	let lyr = getOlLayerByName('vector_layer')
+	if (!lyr) {
+		lyr = new VectorLayer({
+			source: new VectorSource(),
+			style: new Style({
+				fill: new Fill({
+					color: [0, 0, 0, 0.5],
+				}),
+				stroke: new Stroke({
+					width: 1,
+					color: [200, 0, 0, 0.5],
+				}),
+			}),
+		})
+		lyr.set('lyrName', 'vector_layer')
+		map.getOlMap().addLayer(lyr)
+	}
+	geojsonURLs.forEach(url => {
+		loadGeojsonToOlMap(url, lyr)
+	})
+}
 const load3dData = () => {}
 const drawIn2d = () => {}
 const drawIn3d = () => {}
