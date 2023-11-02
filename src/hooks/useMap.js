@@ -2,10 +2,13 @@ import { ref, unref } from 'vue'
 import { Map, View } from 'ol'
 import Tile from 'ol/layer/Tile'
 import XYZ from 'ol/source/XYZ'
+import Fill from 'ol/style/Fill'
 import { GeoJSON } from 'ol/format'
 import OLCesium from '@/libs/olcs2.16.0/OlCesium'
 
 import { tdtURLs, olViewCfg } from '@/configs/map'
+import Style from 'ol/style/Style'
+import { Cesium3DTileset } from 'cesium'
 
 /**
  * 加载GeoJSON数据
@@ -69,11 +72,20 @@ export default function useMap() {
 		map.setEnabled(v)
 	}
 
-	async function loadGeojsonToOlMap(url, target, options) {
+	function loadGeojsonToOlMap(url, target, options) {
 		fetchGeoJSON(url)
 			.then(geojson => {
 				const format = new GeoJSON()
 				const feature = format.readFeatures(geojson)
+				feature.forEach(f => {
+					f.setStyle(
+						new Style({
+							fill: new Fill({
+								color: [Math.random() * 255, Math.random() * 255, Math.random() * 255, 0.5],
+							}),
+						})
+					)
+				})
 				target.getSource().addFeatures(feature)
 			})
 			.catch(error => {
@@ -81,12 +93,66 @@ export default function useMap() {
 			})
 	}
 
+	function load3DTilesetToCesiumScene(url, options) {
+		Cesium3DTileset.fromUrl(url)
+			.then(tileset => {
+				// Custom properties
+				if (!tileset.costomProps) {
+					tileset.costomProps = {}
+				}
+				for (const key in options.properties) {
+					if (Object.hasOwnProperty.call(options.properties, key)) {
+						tileset.costomProps[key] = options.properties[key]
+					}
+				}
+				map.getCesiumScene().primitives.add(tileset)
+				options.flyTo && map.getCesiumViewer().flyTo(tileset)
+			})
+			.catch(error => {
+				console.error(`Error loading tileset: ${error}`)
+			})
+	}
+
+	function removeOlMapLayer(layer) {
+		map.getOlMap().removeLayer(layer)
+	}
+
+	function removeAllOlMapLayers() {
+		const lyrs = map.getOlMap().getAllLayers()
+		lyrs.forEach(layer => {
+			layer.get('customProps') && removeOlMapLayer(layer)
+		})
+	}
+
+	function removeCesiumScenePrimitive(primitive) {
+		map.getCesiumScene().primitives.remove(primitive)
+	}
+
+	function removeAllCesiumScenePrimitives() {
+		const primitives = map.getCesiumScene().primitives
+		const length = primitives.length
+		for (let i = 0; i < length; ++i) {
+			const p = primitives.get(i)
+			p.costomProps && removeCesiumScenePrimitive(p)
+		}
+	}
+
+	function removeCesiumViewerEntity(entity) {
+		map.getCesiumViewer().entities.remove(entity)
+	}
+	function removeAllCesiumViewerEntities() {
+		map.getCesiumViewer().entities.removeAll()
+	}
+
 	function getOlLayerByName(lyrname) {
 		return (
 			map
 				.getOlMap()
 				.getAllLayers()
-				.filter(e => e.get('lyrName') === lyrname)[0] ?? null
+				.filter(e => {
+					const costom = e.get('customProps')
+					return costom && costom['lyrName'] === lyrname
+				})[0] ?? null
 		)
 	}
 
@@ -97,5 +163,12 @@ export default function useMap() {
 		set3dEnabled,
 		getOlLayerByName,
 		loadGeojsonToOlMap,
+		load3DTilesetToCesiumScene,
+		removeOlMapLayer,
+		removeAllOlMapLayers,
+		removeCesiumScenePrimitive,
+		removeAllCesiumScenePrimitives,
+		removeCesiumViewerEntity,
+		removeAllCesiumViewerEntities,
 	}
 }
