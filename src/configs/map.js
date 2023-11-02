@@ -1,4 +1,4 @@
-const tdtToken = 'f5bbb6187254f5d2a920bebb9156504e'
+const tdtToken = '20a24b65d7901cf54d9bd05843e70f5b'
 
 export const tdtURLs = [
 	`https://t3.tianditu.gov.cn/DataServer?T=vec_w&x={x}&y={y}&l={z}&tk=${tdtToken}`,
