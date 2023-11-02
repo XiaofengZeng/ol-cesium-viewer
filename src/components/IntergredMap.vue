@@ -18,6 +18,8 @@ const {
 	getOlLayerByName,
 	loadGeojsonToOlMap,
 	load3DTilesetToCesiumScene,
+	removeAllOlMapLayers,
+	removeAllCesiumScenePrimitives,
 } = useMap()
 
 let map
@@ -35,12 +37,18 @@ const changeDimension = () => {
 		mode: next,
 	})
 }
-const clearAllData = () => {}
+const clearAllData = () => {
+	if (currentStatus.mode) {
+		removeAllCesiumScenePrimitives()
+	} else {
+		removeAllOlMapLayers()
+	}
+}
 const load2dData = () => {
 	updateStatus({
 		operation: '加载二维数据',
 	})
-	let lyr = getOlLayerByName('vector_layer')
+	let lyr = getOlLayerByName('temp_vector_layer')
 	if (!lyr) {
 		lyr = new VectorLayer({
 			source: new VectorSource(),
@@ -55,7 +63,9 @@ const load2dData = () => {
 				// }),
 			}),
 		})
-		lyr.set('lyrName', 'vector_layer')
+		lyr.set('customProps', {
+			lyrName: 'temp_vector_layer',
+		})
 		map.getOlMap().addLayer(lyr)
 	}
 	geojsonURLs.forEach(url => {

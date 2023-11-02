@@ -97,9 +97,12 @@ export default function useMap() {
 		Cesium3DTileset.fromUrl(url)
 			.then(tileset => {
 				// Custom properties
+				if (!tileset.costomProps) {
+					tileset.costomProps = {}
+				}
 				for (const key in options.properties) {
 					if (Object.hasOwnProperty.call(options.properties, key)) {
-						tileset[key] = options.properties[key]
+						tileset.costomProps[key] = options.properties[key]
 					}
 				}
 				map.getCesiumScene().primitives.add(tileset)
@@ -110,12 +113,46 @@ export default function useMap() {
 			})
 	}
 
+	function removeOlMapLayer(layer) {
+		map.getOlMap().removeLayer(layer)
+	}
+
+	function removeAllOlMapLayers() {
+		const lyrs = map.getOlMap().getAllLayers()
+		lyrs.forEach(layer => {
+			layer.get('customProps') && removeOlMapLayer(layer)
+		})
+	}
+
+	function removeCesiumScenePrimitive(primitive) {
+		map.getCesiumScene().primitives.remove(primitive)
+	}
+
+	function removeAllCesiumScenePrimitives() {
+		const primitives = map.getCesiumScene().primitives
+		const length = primitives.length
+		for (let i = 0; i < length; ++i) {
+			const p = primitives.get(i)
+			p.costomProps && removeCesiumScenePrimitive(p)
+		}
+	}
+
+	function removeCesiumViewerEntity(entity) {
+		map.getCesiumViewer().entities.remove(entity)
+	}
+	function removeAllCesiumViewerEntities() {
+		map.getCesiumViewer().entities.removeAll()
+	}
+
 	function getOlLayerByName(lyrname) {
 		return (
 			map
 				.getOlMap()
 				.getAllLayers()
-				.filter(e => e.get('lyrName') === lyrname)[0] ?? null
+				.filter(e => {
+					const costom = e.get('customProps')
+					return costom && costom['lyrName'] === lyrname
+				})[0] ?? null
 		)
 	}
 
@@ -127,5 +164,11 @@ export default function useMap() {
 		getOlLayerByName,
 		loadGeojsonToOlMap,
 		load3DTilesetToCesiumScene,
+		removeOlMapLayer,
+		removeAllOlMapLayers,
+		removeCesiumScenePrimitive,
+		removeAllCesiumScenePrimitives,
+		removeCesiumViewerEntity,
+		removeAllCesiumViewerEntities,
 	}
 }
