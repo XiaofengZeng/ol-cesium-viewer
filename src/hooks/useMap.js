@@ -2,10 +2,13 @@ import { ref, unref } from 'vue'
 import { Map, View } from 'ol'
 import Tile from 'ol/layer/Tile'
 import XYZ from 'ol/source/XYZ'
+import Fill from 'ol/style/Fill'
 import { GeoJSON } from 'ol/format'
 import OLCesium from '@/libs/olcs2.16.0/OlCesium'
 
 import { tdtURLs, olViewCfg } from '@/configs/map'
+import Style from 'ol/style/Style'
+import { Cesium3DTileset } from 'cesium'
 
 /**
  * 加载GeoJSON数据
@@ -69,15 +72,41 @@ export default function useMap() {
 		map.setEnabled(v)
 	}
 
-	async function loadGeojsonToOlMap(url, target, options) {
+	function loadGeojsonToOlMap(url, target, options) {
 		fetchGeoJSON(url)
 			.then(geojson => {
 				const format = new GeoJSON()
 				const feature = format.readFeatures(geojson)
+				feature.forEach(f => {
+					f.setStyle(
+						new Style({
+							fill: new Fill({
+								color: [Math.random() * 255, Math.random() * 255, Math.random() * 255, 0.5],
+							}),
+						})
+					)
+				})
 				target.getSource().addFeatures(feature)
 			})
 			.catch(error => {
 				console.error('There has been a problem with your fetch operation: ' + error.message)
+			})
+	}
+
+	function load3DTilesetToCesiumScene(url, options) {
+		Cesium3DTileset.fromUrl(url)
+			.then(tileset => {
+				// Custom properties
+				for (const key in options.properties) {
+					if (Object.hasOwnProperty.call(options.properties, key)) {
+						tileset[key] = options.properties[key]
+					}
+				}
+				map.getCesiumScene().primitives.add(tileset)
+				options.flyTo && map.getCesiumViewer().flyTo(tileset)
+			})
+			.catch(error => {
+				console.error(`Error loading tileset: ${error}`)
 			})
 	}
 
@@ -97,5 +126,6 @@ export default function useMap() {
 		set3dEnabled,
 		getOlLayerByName,
 		loadGeojsonToOlMap,
+		load3DTilesetToCesiumScene,
 	}
 }
