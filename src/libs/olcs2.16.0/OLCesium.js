@@ -46,6 +46,8 @@ const BoundingSphereState = {
  *      OpenLayers when Cesium is active.
  * @property {Cesium.SceneOptions} [sceneOptions] Allows the passing of property value to the
  *      `Cesium.Scene`.
+ * @property {Cesium.viewerOptions} [viewerOptions] Allows the passing of property value to the
+ *      `Cesium.Viewer`.
  */
 class OLCesium {
     autoRenderLoop_ = null;
@@ -62,6 +64,7 @@ class OLCesium {
     enabled_ = false;
     pausedInteractions_ = [];
     hiddenRootGroup_ = null;
+    viewer_;
     scene_;
     camera_;
     globe_;
@@ -92,7 +95,7 @@ class OLCesium {
          * No change of the view projection.
          */
         this.to4326Transform_ = getTransform(this.map_.getView().getProjection(), 'EPSG:4326');
-        const fillArea = 'position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none';
+        const fillArea = 'position:absolute;top:0;left:0;width:100%;height:100%;touch-action:none;';
         this.container_ = document.createElement('DIV');
         const containerAttribute = document.createAttribute('style');
         containerAttribute.value = `${fillArea}visibility:hidden;`;
@@ -102,6 +105,28 @@ class OLCesium {
             targetElement = document.getElementById(targetElement);
         }
         targetElement.appendChild(this.container_);
+
+        /**
+         * inialize the Cesium Viewer to do some utility operations, eg resize, render, flyTo...
+         */
+        const viewerOptions = options.viewerOptions !== undefined ?
+            { ...options.viewerOptions, scene3DOnly: true } :
+            {
+                sceneMode: Cesium.SceneMode.SCENE3D,
+                animation: false,
+                geocoder: false,
+                homeButton: false,
+                fullscreenButton: false,
+                navigationHelpButton: false,
+                sceneModePicker: false,
+                baseLayerPicker: false,
+                creditContainer: undefined,
+                timeline: false,
+                baseLayer: false,
+                scene3DOnly: true,
+            }
+        this.viewer_ = new Cesium.Viewer(this.container_, viewerOptions);
+
         /**
          * Whether the Cesium container is placed over the ol map.
          * a target => side by side mode
@@ -114,7 +139,12 @@ class OLCesium {
                 this.container_.addEventListener(overlayEvents[i], evt => evt.stopPropagation());
             }
         }
-        this.canvas_ = document.createElement('canvas');
+        /**
+         * change this.canvas_ value to the first element in the document that has 'cesium-widget' class name,
+         * it will automatically change css and do something
+         */
+        // this.canvas_ = document.createElement('canvas');
+        this.canvas_ = this.viewer_.container.getElementsByClassName('cesium-widget')[0].children[0]
         const canvasAttribute = document.createAttribute('style');
         canvasAttribute.value = fillArea;
         this.canvas_.setAttributeNode(canvasAttribute);
@@ -128,11 +158,17 @@ class OLCesium {
         this.canvas_.onselectstart = function () {
             return false;
         };
-        this.container_.appendChild(this.canvas_);
-        const sceneOptions = options.sceneOptions !== undefined ?
-            { ...options.sceneOptions, canvas: this.canvas_, scene3DOnly: true } :
-            { canvas: this.canvas_, scene3DOnly: true };
-        this.scene_ = new Cesium.Scene(sceneOptions);
+
+        /**
+         * viewer_ is already mounted to document node
+         */
+        // this.container_.appendChild(this.canvas_);
+        // const sceneOptions = options.sceneOptions !== undefined ?
+        //     { ...options.sceneOptions, canvas: this.canvas_, scene3DOnly: true } :
+        //     { canvas: this.canvas_, scene3DOnly: true };
+        // this.scene_ = new Cesium.Scene(viewerOptions);
+        
+        this.scene_ = this.viewer_.scene;
         const sscc = this.scene_.screenSpaceCameraController;
         if (!Array.isArray(sscc.tiltEventTypes)) {
             console.log('sscc is not an array');
@@ -181,6 +217,19 @@ class OLCesium {
         }
         const eventHelper = new Cesium.EventHelper();
         eventHelper.add(this.scene_.postRender, OLCesium.prototype.updateTrackedEntity_, this);
+
+        /**
+         * remove all Cesium controls
+         */
+        const viewerControls = [...this.viewer_.container.getElementsByClassName('cesium-viewer')[0].children]
+        viewerControls.forEach(c => {
+        if (c.className !== 'cesium-viewer-cesiumWidgetContainer'
+            // && c.className !== 'cesium-viewer-infoBoxContainer'
+            // && c.className !== 'cesium-viewer-selectionIndicatorContaine'
+        ) {
+            c.remove()
+        }
+        })
     }
     /**
      * Destroys the Cesium resources held by this object.
@@ -303,6 +352,9 @@ class OLCesium {
         const view = this.map_.getView();
         console.assert(view);
         return view;
+    }
+    getCesiumViewer() {
+        return this.viewer_;
     }
     getCesiumScene() {
         return this.scene_;
