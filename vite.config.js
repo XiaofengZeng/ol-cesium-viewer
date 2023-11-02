@@ -16,6 +16,7 @@ export default defineConfig(context => {
 	const env = loadEnv(mode, envDir)
 	const olBaseUrl = env['VITE_OL_BASE_URL']
 	const cesiumBaseUrl = env['VITE_CESIUM_BASE_URL']
+	const olcsBaseUrl = env['VITE_OLCS_BASE_URL']
 	const base = '/'
 
 	const resolve = {
@@ -32,16 +33,20 @@ export default defineConfig(context => {
 		}),
 		insertHtml({
 			head: [
-				h('link', {
-					rel: 'stylesheet',
-					href: isProd ? `${olBaseUrl}ol.css` : `${base}${olBaseUrl}ol.css`,
-				}),
 				h('script', {
 					src: isProd ? `${cesiumBaseUrl}Cesium.js` : `${base}${cesiumBaseUrl}Cesium.js`,
 				}),
 				h('link', {
 					rel: 'stylesheet',
 					href: isProd ? `${cesiumBaseUrl}Widgets/widgets.css` : `${base}${cesiumBaseUrl}Widgets/widgets.css`,
+				}),
+				h('link', {
+					rel: 'stylesheet',
+					href: isProd ? `${olBaseUrl}ol.css` : `${base}${olBaseUrl}ol.css`,
+				}),
+				h('link', {
+					rel: 'stylesheet',
+					href: isProd ? `${olcsBaseUrl}olcs.css` : `${base}${olcsBaseUrl}olcs.css`,
 				}),
 			],
 		}),
@@ -69,6 +74,18 @@ export default defineConfig(context => {
 						dest: cesiumLibraryCopyToRootPath,
 					},
 					...cesiumStaticSourceCopyOptions,
+				],
+			})
+		)
+		const olcsLibraryRoot = 'node_modules/olcs'
+		const olcsLibraryCopyToRootPath = 'libs/olcs2.16.0/'
+		plugins.push(
+			viteStaticCopy({
+				targets: [
+					{
+						src: `${olcsLibraryRoot}/olcs.css`,
+						dest: olcsLibraryCopyToRootPath,
+					},
 				],
 			})
 		)

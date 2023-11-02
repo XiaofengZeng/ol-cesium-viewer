@@ -1,7 +1,19 @@
-# Vue 3 + Vite
+# ol-cesium-viewer
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+## Dependencies
 
-## Recommended IDE Setup
+- ol@8.1.0
+- cesium@1.111.0
+- olcs@2.16.0
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+## Modification about OLCesium
+
+1. Added `viewer_` property to expose the Cesium Viewer instance.
+2. Changed `canvas_` value to canvas element that in Cesium Viewer instance target element.
+3. Changed `scene_` value to scene property that in Cesium Viewer instance.
+4. Removed useless element in Cesium Viewer instance target element.
+
+## Fixed/Attention issues
+
+1. Dropped support for `KTX1` file since `cesium@1.83.0`
+2. Fixed `olcs@2.16.0/OLCesium.js` style value about `fillArea` variable
