@@ -3,7 +3,7 @@
 ## Dependencies
 
 - ol@8.1.0
-- cesium@1.111.0
+- cesium@1.110.1
 - olcs@2.16.0
 
 ## Modification about OLCesium
