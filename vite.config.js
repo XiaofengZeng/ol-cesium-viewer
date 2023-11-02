@@ -59,7 +59,7 @@ export default defineConfig(context => {
 	]
 	if (!isProd) {
 		const cesiumLibraryRoot = 'node_modules/cesium/Build/CesiumUnminified/'
-		const cesiumLibraryCopyToRootPath = 'libs/cesium/'
+		const cesiumLibraryCopyToRootPath = 'libs/Cesium/'
 		const cesiumStaticSourceCopyOptions = ['Assets', 'ThirdParty', 'Workers', 'Widgets'].map(dirName => {
 			return {
 				src: `${cesiumLibraryRoot}${dirName}/*`,

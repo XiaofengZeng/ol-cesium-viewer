@@ -1,7 +1,7 @@
 /**
  * @license
  * Cesium - https://github.com/CesiumGS/cesium
- * Version 1.110.1
+ * Version 1.111
  *
  * Copyright 2011-2022 Cesium Contributors
  *
@@ -25,89 +25,89 @@
 
 import {
   BoundingRectangle_default
-} from "./chunk-MOSBHBQO.js";
+} from "./chunk-FNHGOHCI.js";
 import {
   PolygonGeometryLibrary_default
-} from "./chunk-KGVHVTX7.js";
+} from "./chunk-ULABUYF6.js";
 import {
   ArcType_default
-} from "./chunk-2IZ2LJ3N.js";
+} from "./chunk-DHO4HQHW.js";
 import {
   GeometryInstance_default
-} from "./chunk-HW6ANEVG.js";
+} from "./chunk-DD2PDL6D.js";
 import {
   GeometryPipeline_default
-} from "./chunk-ZEHXFKIR.js";
-import "./chunk-BKVKFLIC.js";
-import "./chunk-YOZZHZVR.js";
+} from "./chunk-TIEL2RYB.js";
+import "./chunk-4EXWKTY2.js";
+import "./chunk-EEL3YC6V.js";
 import {
   oneTimeWarning_default
-} from "./chunk-AXODHVUI.js";
+} from "./chunk-2GWOHAWL.js";
 import {
   EllipsoidGeodesic_default
-} from "./chunk-FBRBVOAJ.js";
+} from "./chunk-LID3UUML.js";
 import {
   GeometryOffsetAttribute_default
-} from "./chunk-EZPA2AXQ.js";
+} from "./chunk-ZERWARDV.js";
 import {
   VertexFormat_default
-} from "./chunk-HYNBEK4C.js";
+} from "./chunk-N7FIYNQV.js";
 import {
   EllipsoidTangentPlane_default
-} from "./chunk-TWN33EAP.js";
-import "./chunk-ZBTL2GWA.js";
+} from "./chunk-AI2FOC47.js";
+import "./chunk-5HUDPV54.js";
 import {
   PolygonPipeline_default,
   WindingOrder_default
-} from "./chunk-Z6SS6KIF.js";
-import "./chunk-J5YKECLG.js";
-import "./chunk-54QBXZYE.js";
+} from "./chunk-I5XKU3UZ.js";
+import "./chunk-E5HIGWSZ.js";
+import "./chunk-IDAL54EF.js";
 import {
   IntersectionTests_default,
   Ray_default
-} from "./chunk-KXTDRKW5.js";
-import "./chunk-FDNL4I6K.js";
+} from "./chunk-R5NOUYKW.js";
+import "./chunk-PNAD2XAN.js";
 import {
   IndexDatatype_default
-} from "./chunk-CLVX47CD.js";
-import "./chunk-I6R5G76Q.js";
+} from "./chunk-CKOGHQ6J.js";
+import "./chunk-EH2PEDWL.js";
 import {
   GeometryAttribute_default,
   Geometry_default
-} from "./chunk-VEPSTOBV.js";
+} from "./chunk-3R5RPSYS.js";
 import {
   BoundingSphere_default,
   Quaternion_default
-} from "./chunk-TV4Q4TKV.js";
-import "./chunk-MQ32KIOU.js";
+} from "./chunk-XKGSTUQO.js";
+import "./chunk-DNCKFFNR.js";
 import {
   Cartesian2_default,
   Rectangle_default
-} from "./chunk-EJWAO37W.js";
+} from "./chunk-IQCBK4CE.js";
 import {
   ComponentDatatype_default
-} from "./chunk-7W3AMBD6.js";
+} from "./chunk-UJ76JVUZ.js";
 import {
   Cartesian3_default,
   Cartographic_default,
   Ellipsoid_default,
   Matrix3_default
-} from "./chunk-M57VBCI4.js";
+} from "./chunk-54GSYZWT.js";
 import {
   Math_default
-} from "./chunk-A7T4GOG3.js";
-import "./chunk-GQ66IPL6.js";
-import "./chunk-ZADWOYGF.js";
+} from "./chunk-A3TYRSRJ.js";
+import "./chunk-XNRYWRVT.js";
+import "./chunk-YK5RU5AO.js";
 import {
   defaultValue_default
-} from "./chunk-CGHLEZ43.js";
+} from "./chunk-N73NY3KY.js";
 import {
   Check_default,
   DeveloperError_default
-} from "./chunk-6EZ4NFIC.js";
+} from "./chunk-WYMW5NZB.js";
 import {
   defined_default
-} from "./chunk-XZKRFAT7.js";
+} from "./chunk-FMN2NHBU.js";
 
 // packages/engine/Source/Core/deprecationWarning.js
 function deprecationWarning(identifier, message) {
@@ -780,7 +780,7 @@ function createGeometryFromPositionsExtruded(ellipsoid, polygon2, textureCoordin
     });
   }
   let outerRing = hierarchy.outerRing;
-  let tangentPlane = EllipsoidTangentPlane_default.fromPoints(outerRing, ellipsoid);
+  const tangentPlane = EllipsoidTangentPlane_default.fromPoints(outerRing, ellipsoid);
   let positions2D = tangentPlane.projectPointsOntoPlane(
     outerRing,
     createGeometryFromPositionsExtrudedPositions
@@ -805,7 +805,6 @@ function createGeometryFromPositionsExtruded(ellipsoid, polygon2, textureCoordin
   const holes = hierarchy.holes;
   for (i = 0; i < holes.length; i++) {
     let hole = holes[i];
-    tangentPlane = EllipsoidTangentPlane_default.fromPoints(hole, ellipsoid);
     positions2D = tangentPlane.projectPointsOntoPlane(
       hole,
       createGeometryFromPositionsExtrudedPositions
@@ -1184,7 +1183,7 @@ function getTangentPlane(rectangle, positions, ellipsoid) {
   return EllipsoidTangentPlane_default.fromPoints(positions, ellipsoid);
 }
 var scratchCartographicCyllindrical = new Cartographic_default();
-function createProjectTo2d(rectangle, ellipsoid) {
+function createProjectTo2d(rectangle, outerPositions, ellipsoid) {
   return (positions, results) => {
     if (rectangle.height >= Math_default.PI || rectangle.width >= Math_default.PI) {
       if (rectangle.south < 0 && rectangle.north > 0) {
@@ -1206,7 +1205,10 @@ function createProjectTo2d(rectangle, ellipsoid) {
       }
       return Stereographic_default.fromCartesianArray(positions, results);
     }
-    const tangentPlane = EllipsoidTangentPlane_default.fromPoints(positions, ellipsoid);
+    const tangentPlane = EllipsoidTangentPlane_default.fromPoints(
+      outerPositions,
+      ellipsoid
+    );
     return tangentPlane.projectPointsOntoPlane(positions, results);
   };
 }
@@ -1287,7 +1289,7 @@ PolygonGeometry.createGeometry = function(polygonGeometry) {
   const results = PolygonGeometryLibrary_default.polygonsFromHierarchy(
     polygonHierarchy,
     hasTextureCoordinates,
-    createProjectTo2d(rectangle, ellipsoid),
+    createProjectTo2d(rectangle, outerPositions, ellipsoid),
     !perPositionHeight,
     ellipsoid,
     createSplitPolygons(rectangle, ellipsoid, arcType, perPositionHeight)

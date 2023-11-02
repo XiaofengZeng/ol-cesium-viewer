@@ -6,8 +6,8 @@ settings:
 
 dependencies:
   cesium:
-    specifier: ^1.110.1
-    version: 1.110.1
+    specifier: ^1.111.0
+    version: 1.111.0
   element-plus:
     specifier: ^2.4.1
     version: 2.4.1(vue@3.3.4)
@@ -19,7 +19,7 @@ dependencies:
     version: 8.1.0
   olcs:
     specifier: ^2.16.0
-    version: 2.16.0(cesium@1.110.1)(ol@8.1.0)
+    version: 2.16.0(cesium@1.111.0)(ol@8.1.0)
   vue:
     specifier: ^3.3.4
     version: 3.3.4
@@ -718,8 +718,8 @@ packages:
     resolution: {integrity: sha512-cPiMKZgqgkg5LY3/ntGeLFUpi6tzddBNS58A4tnTgQw1zON7u2sZMU7SzOeVH4tj20++9ggL+V6FDOFMTaFFYA==}
     dev: true
 
-  /cesium@1.110.1:
-    resolution: {integrity: sha512-wlpIunlt6J5XLfm4AKj/Sx0yb0PI7jF8J+bcz/Kjy/K8JRu9WWto+MLXRLgx/++EFXpIzGcC+ZIUhEY/ThcOAA==}
+  /cesium@1.111.0:
+    resolution: {integrity: sha512-wWtBa1KIMIJZR39U4Tv+CkJUeCfi83eVjCLxblYilD9zd4gb7vm3V9ytmJ0+v0sqk9RQws5JOg7Hobbs9ODTxQ==}
     engines: {node: '>=14.0.0'}
     dependencies:
       '@cesium/engine': 6.1.0
@@ -1269,13 +1269,13 @@ packages:
       rbush: 3.0.1
     dev: false
 
-  /olcs@2.16.0(cesium@1.110.1)(ol@8.1.0):
+  /olcs@2.16.0(cesium@1.111.0)(ol@8.1.0):
     resolution: {integrity: sha512-OqP+9ZiWaPTIygT+q9HVEUuNbeimq6OZ/WnN3mEZdkg/SeWoy3VaJf0qeCZeBi+v14rXkxYDu5sskZ36M9MSMQ==}
     peerDependencies:
       cesium: '>= 1.62.0'
       ol: '>= 6.0.1 || 7 || 8'
     dependencies:
-      cesium: 1.110.1
+      cesium: 1.111.0
       ol: 8.1.0
     dev: false
 
