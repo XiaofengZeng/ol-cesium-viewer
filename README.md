@@ -3,7 +3,7 @@
 ## Dependencies
 
 - ol@8.1.0
-- cesium@1.110.1
+- cesium@1.111.0
 - olcs@2.16.0
 
 ## Modification about OLCesium
@@ -16,4 +16,4 @@
 ## Fixed/Attention issues
 
 1. Dropped support for `KTX1` file since `cesium@1.83.0`
-2. Fixed `olcs@2.16.0/OLCesium.js` style value about `fillArea` variable
+2. Fixed `olcs@2.16.0/OLCesium.js` style value about `fillArea` variable error
