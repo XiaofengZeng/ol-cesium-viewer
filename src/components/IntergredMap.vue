@@ -1,28 +1,29 @@
 <script setup>
 import { reactive, onMounted, nextTick } from 'vue'
-import { mapCfg } from '@/configs/map'
-import useMap from '@/hooks/useMap'
-import VectorLayer from 'ol/layer/Vector'
-import VectorSource from 'ol/source/Vector'
-import Style from 'ol/style/Style'
-import Fill from 'ol/style/Fill'
-// import Stroke from 'ol/style/Stroke'
 
+import Draw from 'ol/interaction/Draw'
+import { GeometryType } from '@/enums/ol'
+import { OperationType } from '@/enums/system'
+
+import { mapCfg } from '@/configs/map'
 import { geojsonURLs, tilesetURLs } from '@/configs/data'
+import useMap from '@/hooks/useMap'
 
 const {
 	initMap,
 	getMap,
 	get3dEnabled,
 	set3dEnabled,
-	getOlLayerByName,
+	getOrCreateOlVectorLayer,
 	loadGeojsonToOlMap,
 	load3DTilesetToCesiumScene,
+	addLayerToMap,
 	removeAllOlMapLayers,
 	removeAllCesiumScenePrimitives,
 } = useMap()
 
 let map
+let draw2d
 
 const currentStatus = reactive({
 	mode: mapCfg.enable3DImmediately,
@@ -30,9 +31,14 @@ const currentStatus = reactive({
 })
 
 const changeDimension = () => {
+	if (draw2d) {
+		map.getOlMap().removeInteraction(draw2d)
+		draw2d = undefined
+	}
 	const pre = get3dEnabled()
 	const next = !pre
 	map && set3dEnabled(next)
+
 	updateStatus({
 		mode: next,
 	})
@@ -46,35 +52,17 @@ const clearAllData = () => {
 }
 const load2dData = () => {
 	updateStatus({
-		operation: '加载二维数据',
+		operation: OperationType.LOAD_2D_DATA,
 	})
-	let lyr = getOlLayerByName('temp_vector_layer')
-	if (!lyr) {
-		lyr = new VectorLayer({
-			source: new VectorSource(),
-			style: new Style({
-				fill: new Fill({
-					color: [0, 0, 0, 0.5],
-				}),
-				// FIXME: if has storke，will occur error when synchronize to Scene
-				// stroke: new Stroke({
-				// 	width: 1,
-				// 	color: [200, 0, 0, 0.5],
-				// }),
-			}),
-		})
-		lyr.set('customProps', {
-			lyrName: 'temp_vector_layer',
-		})
-		map.getOlMap().addLayer(lyr)
-	}
+	const lyr = getOrCreateOlVectorLayer('temp_vector_layer')
+	addLayerToMap(lyr)
 	geojsonURLs.forEach(url => {
 		loadGeojsonToOlMap(url, lyr)
 	})
 }
 const load3dData = () => {
 	updateStatus({
-		operation: '加载三维数据',
+		operation: OperationType.LOAD_3D_DATA,
 	})
 	tilesetURLs.forEach(cfg => {
 		load3DTilesetToCesiumScene(cfg.url, {
@@ -83,8 +71,23 @@ const load3dData = () => {
 		})
 	})
 }
-const drawIn2d = () => {}
-const drawIn3d = () => {}
+const drawIn2d = () => {
+	updateStatus({
+		operation: OperationType.DRAW_2D,
+	})
+	const lyr = getOrCreateOlVectorLayer('temp_draw_vector_layer')
+	addLayerToMap(lyr)
+	draw2d = new Draw({
+		source: lyr.getSource(),
+		type: GeometryType.LineString,
+	})
+	map.getOlMap().addInteraction(draw2d)
+}
+const drawIn3d = () => {
+	updateStatus({
+		operation: OperationType.DRAW_3D,
+	})
+}
 
 const updateStatus = status => {
 	Object.assign(currentStatus, status)

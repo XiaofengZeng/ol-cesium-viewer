@@ -1,15 +1,19 @@
 import { ref, unref } from 'vue'
 import { Map, View } from 'ol'
 import Tile from 'ol/layer/Tile'
+import VectorLayer from 'ol/layer/Vector'
+import VectorSource from 'ol/source/Vector'
+import { GeoJSON } from 'ol/format'
 import XYZ from 'ol/source/XYZ'
 import Style from 'ol/style/Style'
 import Fill from 'ol/style/Fill'
-import { GeoJSON } from 'ol/format'
+import Stroke from 'ol/style/Stroke'
+
 import OLCesium from '@/libs/olcs2.16.0/OlCesium'
 import { Cesium3DTileset } from 'cesium'
 
 import { olViewCfg } from '@/configs/map'
-import { tdtURLs } from '../configs/data'
+import { tdtURLs } from '@/configs/data'
 
 /**
  * 加载GeoJSON数据
@@ -84,6 +88,11 @@ export default function useMap() {
 							fill: new Fill({
 								color: [Math.random() * 255, Math.random() * 255, Math.random() * 255, 0.5],
 							}),
+							// FIXME: if has storke，will occur error when synchronize to Scene
+							// stroke: new Stroke({
+							// 	width: 3,
+							// 	color: [0, 200, 0, 0.5],
+							// }),
 						})
 					)
 				})
@@ -112,6 +121,20 @@ export default function useMap() {
 			.catch(error => {
 				console.error(`Error loading tileset: ${error}`)
 			})
+	}
+
+	function addLayerToMap(layer) {
+		// avoid to add duplicated layer.
+		let isExisting = false
+		const layers = map.getOlMap().getAllLayers()
+		layers.forEach(lyr => {
+			if (layer == lyr) {
+				isExisting = true
+			}
+		})
+		if (!isExisting) {
+			map.getOlMap().addLayer(layer)
+		}
 	}
 
 	function removeOlMapLayer(layer) {
@@ -145,6 +168,28 @@ export default function useMap() {
 		map.getCesiumViewer().entities.removeAll()
 	}
 
+	function getOrCreateOlVectorLayer(lyrName) {
+		let lyr = getOlLayerByName(lyrName)
+		if (!lyr) {
+			lyr = new VectorLayer({
+				source: new VectorSource({ wrapX: false }),
+				style: new Style({
+					fill: new Fill({
+						color: [0, 0, 0, 0.5],
+					}),
+					stroke: new Stroke({
+						width: 3,
+						color: [0, 200, 0, 0.5],
+					}),
+				}),
+			})
+			lyr.set('customProps', {
+				lyrName,
+			})
+		}
+		return lyr
+	}
+
 	function getOlLayerByName(lyrname) {
 		return (
 			map
@@ -165,6 +210,8 @@ export default function useMap() {
 		getOlLayerByName,
 		loadGeojsonToOlMap,
 		load3DTilesetToCesiumScene,
+		getOrCreateOlVectorLayer,
+		addLayerToMap,
 		removeOlMapLayer,
 		removeAllOlMapLayers,
 		removeCesiumScenePrimitive,
