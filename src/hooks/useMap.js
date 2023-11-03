@@ -7,6 +7,7 @@ import { GeoJSON } from 'ol/format'
 import XYZ from 'ol/source/XYZ'
 import Style from 'ol/style/Style'
 import Fill from 'ol/style/Fill'
+import Circle from 'ol/style/Circle'
 import Stroke from 'ol/style/Stroke'
 import Draw from 'ol/interaction/Draw'
 
@@ -188,16 +189,23 @@ export default function useMap() {
 	function getOrCreateOlVectorLayer(lyrName) {
 		let lyr = getOlLayerByName(lyrName)
 		if (!lyr) {
+			const fill = new Fill({
+				color: [60, 60, 60, 0.4],
+			})
+			const stroke = new Stroke({
+				width: 3,
+				color: [0, 255, 0, 0.6],
+			})
 			lyr = new VectorLayer({
 				source: new VectorSource({ wrapX: false }),
 				style: new Style({
-					fill: new Fill({
-						color: [60, 60, 60, 0.5],
+					image: new Circle({
+						fill: fill,
+						stroke: stroke,
+						radius: 5,
 					}),
-					stroke: new Stroke({
-						width: 3,
-						color: [0, 200, 0, 0.5],
-					}),
+					fill,
+					stroke,
 				}),
 			})
 			lyr.set('customProps', {

@@ -36,9 +36,6 @@ const currentStatus = reactive({
 })
 
 const changeDimension = () => {
-	updateStatus({
-		operation: OperationType.NONE,
-	})
 	if (draw2d) {
 		removeOlDrawInteraction(draw2d)
 		draw2d = undefined
@@ -49,15 +46,22 @@ const changeDimension = () => {
 
 	updateStatus({
 		mode: next,
+		operation: OperationType.NONE,
 	})
 }
+
 const clearAllData = () => {
 	if (currentStatus.mode) {
 		removeAllCesiumScenePrimitives()
 	} else {
 		removeAllOlMapLayers()
+		if (draw2d) {
+			removeOlDrawInteraction(draw2d)
+			draw2d = undefined
+		}
 	}
 }
+
 const load2dData = () => {
 	updateStatus({
 		operation: OperationType.LOAD_2D_DATA,
@@ -68,6 +72,7 @@ const load2dData = () => {
 		loadGeojsonToOlMap(url, lyr)
 	})
 }
+
 const load3dData = () => {
 	updateStatus({
 		operation: OperationType.LOAD_3D_DATA,
@@ -79,6 +84,7 @@ const load3dData = () => {
 		})
 	})
 }
+
 const drawIn2d = () => {
 	updateStatus({
 		operation: OperationType.DRAW_2D,
@@ -87,6 +93,7 @@ const drawIn2d = () => {
 	addLayerToMap(draw2dLayer)
 	drawActivatedType.value = OlDrawGeometryType.LINE_STRING
 }
+
 const drawIn3d = () => {
 	updateStatus({
 		operation: OperationType.DRAW_3D,
