@@ -1,14 +1,22 @@
 import { ref, unref } from 'vue'
 import { Map, View } from 'ol'
 import Tile from 'ol/layer/Tile'
-import XYZ from 'ol/source/XYZ'
-import Fill from 'ol/style/Fill'
+import VectorLayer from 'ol/layer/Vector'
+import VectorSource from 'ol/source/Vector'
 import { GeoJSON } from 'ol/format'
-import OLCesium from '@/libs/olcs2.16.0/OlCesium'
-
-import { tdtURLs, olViewCfg } from '@/configs/map'
+import XYZ from 'ol/source/XYZ'
 import Style from 'ol/style/Style'
+import Fill from 'ol/style/Fill'
+import Circle from 'ol/style/Circle'
+import Stroke from 'ol/style/Stroke'
+import Draw from 'ol/interaction/Draw'
+
+import OLCesium from '@/libs/olcs2.16.0/OlCesium'
 import { Cesium3DTileset } from 'cesium'
+
+import { OlDrawStatus } from '../enums/ol'
+import { olViewCfg } from '@/configs/map'
+import { tdtURLs } from '@/configs/data'
 
 /**
  * 加载GeoJSON数据
@@ -32,8 +40,23 @@ const fetchGeoJSON = async url => {
 		})
 }
 
+const initOlDrawInteraction = (type, layer, start = undefined, end = undefined) => {
+	const draw = new Draw({
+		source: layer.getSource(),
+		type,
+	})
+	if (start) {
+		draw.on(OlDrawStatus.DRAW_START, start)
+	}
+	if (end) {
+		draw.on(OlDrawStatus.DRAW_END, end)
+	}
+	return draw
+}
+
 export default function useMap() {
 	let map
+	let olDraw
 	const enabled3d = ref(false)
 
 	function initMap(el, opt) {
@@ -83,6 +106,11 @@ export default function useMap() {
 							fill: new Fill({
 								color: [Math.random() * 255, Math.random() * 255, Math.random() * 255, 0.5],
 							}),
+							// FIXME: if has storke，will occur error when synchronize to Scene
+							// stroke: new Stroke({
+							// 	width: 3,
+							// 	color: [0, 200, 0, 0.5],
+							// }),
 						})
 					)
 				})
@@ -111,6 +139,20 @@ export default function useMap() {
 			.catch(error => {
 				console.error(`Error loading tileset: ${error}`)
 			})
+	}
+
+	function addLayerToMap(layer) {
+		// avoid to add duplicated layer.
+		let isExisting = false
+		const layers = map.getOlMap().getAllLayers()
+		layers.forEach(lyr => {
+			if (layer == lyr) {
+				isExisting = true
+			}
+		})
+		if (!isExisting) {
+			map.getOlMap().addLayer(layer)
+		}
 	}
 
 	function removeOlMapLayer(layer) {
@@ -144,6 +186,35 @@ export default function useMap() {
 		map.getCesiumViewer().entities.removeAll()
 	}
 
+	function getOrCreateOlVectorLayer(lyrName) {
+		let lyr = getOlLayerByName(lyrName)
+		if (!lyr) {
+			const fill = new Fill({
+				color: [60, 60, 60, 0.4],
+			})
+			const stroke = new Stroke({
+				width: 3,
+				color: [0, 255, 0, 0.6],
+			})
+			lyr = new VectorLayer({
+				source: new VectorSource({ wrapX: false }),
+				style: new Style({
+					image: new Circle({
+						fill: fill,
+						stroke: stroke,
+						radius: 5,
+					}),
+					fill,
+					stroke,
+				}),
+			})
+			lyr.set('customProps', {
+				lyrName,
+			})
+		}
+		return lyr
+	}
+
 	function getOlLayerByName(lyrname) {
 		return (
 			map
@@ -156,6 +227,18 @@ export default function useMap() {
 		)
 	}
 
+	function addOlDrawInteraction(type, layer, start, end) {
+		olDraw && map.getOlMap().removeInteraction(olDraw)
+		olDraw = initOlDrawInteraction(type, layer, start, end)
+		map.getOlMap().addInteraction(olDraw)
+		return olDraw
+	}
+
+	function removeOlDrawInteraction(interaction) {
+		map.getOlMap().removeInteraction(interaction)
+		olDraw = undefined
+	}
+
 	return {
 		initMap,
 		getMap,
@@ -164,11 +247,15 @@ export default function useMap() {
 		getOlLayerByName,
 		loadGeojsonToOlMap,
 		load3DTilesetToCesiumScene,
+		getOrCreateOlVectorLayer,
+		addLayerToMap,
 		removeOlMapLayer,
 		removeAllOlMapLayers,
 		removeCesiumScenePrimitive,
 		removeAllCesiumScenePrimitives,
 		removeCesiumViewerEntity,
 		removeAllCesiumViewerEntities,
+		addOlDrawInteraction,
+		removeOlDrawInteraction,
 	}
 }

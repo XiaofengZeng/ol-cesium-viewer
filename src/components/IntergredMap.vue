@@ -1,80 +1,81 @@
 <script setup>
-import { reactive, computed, onMounted, nextTick } from 'vue'
-import { mapCfg } from '@/configs/map'
-import useMap from '@/hooks/useMap'
-import VectorLayer from 'ol/layer/Vector'
-import VectorSource from 'ol/source/Vector'
-import Style from 'ol/style/Style'
-import Fill from 'ol/style/Fill'
-// import Stroke from 'ol/style/Stroke'
+import { ref, reactive, watch, computed, onMounted, nextTick } from 'vue'
 
-import { geojsonURLs, tilesetURLs } from '@/configs/map'
+import { OlDrawGeometryType } from '@/enums/ol'
+import { CsDrawGeometryType } from '@/enums/cs'
+import { OperationType } from '@/enums/system'
+
+import { mapCfg } from '@/configs/map'
+import { geojsonURLs, tilesetURLs } from '@/configs/data'
+import useMap from '@/hooks/useMap'
 
 const {
 	initMap,
 	getMap,
 	get3dEnabled,
 	set3dEnabled,
-	getOlLayerByName,
+	getOrCreateOlVectorLayer,
 	loadGeojsonToOlMap,
 	load3DTilesetToCesiumScene,
+	addLayerToMap,
 	removeAllOlMapLayers,
 	removeAllCesiumScenePrimitives,
+	addOlDrawInteraction,
+	removeOlDrawInteraction,
 } = useMap()
 
 let map
+let draw2d
+let draw2dLayer
+
+const drawActivatedType = ref('')
 
 const currentStatus = reactive({
 	mode: mapCfg.enable3DImmediately,
-	operation: '',
+	operation: OperationType.NONE,
 })
 
 const changeDimension = () => {
+	if (draw2d) {
+		removeOlDrawInteraction(draw2d)
+		draw2d = undefined
+	}
 	const pre = get3dEnabled()
 	const next = !pre
 	map && set3dEnabled(next)
+
 	updateStatus({
 		mode: next,
+		operation: OperationType.NONE,
 	})
 }
+
 const clearAllData = () => {
 	if (currentStatus.mode) {
 		removeAllCesiumScenePrimitives()
 	} else {
 		removeAllOlMapLayers()
+		if (draw2d) {
+			removeOlDrawInteraction(draw2d)
+			draw2d = undefined
+		}
 	}
 }
+
 const load2dData = () => {
 	updateStatus({
-		operation: '加载二维数据',
+		operation: OperationType.LOAD_2D_DATA,
 	})
-	let lyr = getOlLayerByName('temp_vector_layer')
-	if (!lyr) {
-		lyr = new VectorLayer({
-			source: new VectorSource(),
-			style: new Style({
-				fill: new Fill({
-					color: [0, 0, 0, 0.5],
-				}),
-				// FIXME: if has storke，will occur error when synchronize to Scene
-				// stroke: new Stroke({
-				// 	width: 1,
-				// 	color: [200, 0, 0, 0.5],
-				// }),
-			}),
-		})
-		lyr.set('customProps', {
-			lyrName: 'temp_vector_layer',
-		})
-		map.getOlMap().addLayer(lyr)
-	}
+	const lyr = getOrCreateOlVectorLayer('temp_vector_layer')
+	addLayerToMap(lyr)
 	geojsonURLs.forEach(url => {
 		loadGeojsonToOlMap(url, lyr)
 	})
 }
+
 const load3dData = () => {
 	updateStatus({
-		operation: '加载三维数据',
+		operation: OperationType.LOAD_3D_DATA,
 	})
 	tilesetURLs.forEach(cfg => {
 		load3DTilesetToCesiumScene(cfg.url, {
@@ -83,12 +84,47 @@ const load3dData = () => {
 		})
 	})
 }
-const drawIn2d = () => {}
-const drawIn3d = () => {}
+
+const drawIn2d = () => {
+	updateStatus({
+		operation: OperationType.DRAW_2D,
+	})
+	draw2dLayer = getOrCreateOlVectorLayer('temp_draw_vector_layer')
+	addLayerToMap(draw2dLayer)
+	drawActivatedType.value = OlDrawGeometryType.LINE_STRING
+}
+
+const drawIn3d = () => {
+	updateStatus({
+		operation: OperationType.DRAW_3D,
+	})
+}
 
 const updateStatus = status => {
 	Object.assign(currentStatus, status)
 }
+
+const isDrawing = computed(() => {
+	return currentStatus.operation == OperationType.DRAW_2D || currentStatus.operation == OperationType.DRAW_3D
+})
+
+const drawGeometryType = computed(() => {
+	let type = {}
+	switch (currentStatus.operation) {
+		case OperationType.DRAW_2D:
+			type = OlDrawGeometryType
+			break
+		case OperationType.DRAW_3D:
+			type = CsDrawGeometryType
+		default:
+			break
+	}
+	return type
+})
+
+watch(drawActivatedType, nVal => {
+	draw2d = addOlDrawInteraction(nVal, draw2dLayer)
+})
 
 onMounted(() => {
 	window.addEventListener('resize', () => {
@@ -137,6 +173,15 @@ onMounted(() => {
 			<el-col :span="12">
 				<el-button type="primary" :disabled="!currentStatus.mode" class="w-full" @click="drawIn3d">三维绘制</el-button>
 			</el-col>
+		</el-row>
+		<el-row :gutter="10" class="m-[5px] p-[5px]">
+			<el-select
+				class="w-full ml-[5px] mr-[5px]"
+				v-model="drawActivatedType"
+				placeholder="Plase acitive draw operation."
+				:disabled="!isDrawing">
+				<el-option v-for="(value, index) in drawGeometryType" :key="index" :label="value" :value="value" />
+			</el-select>
 		</el-row>
 	</div>
 	<div id="map" class="w-full h-screen"></div>
