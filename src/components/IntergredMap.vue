@@ -50,7 +50,7 @@ const changeDimension = () => {
 	})
 }
 
-const clearAllData = () => {
+const reset = () => {
 	if (currentStatus.mode) {
 		removeAllCesiumScenePrimitives()
 	} else {
@@ -58,8 +58,12 @@ const clearAllData = () => {
 		if (draw2d) {
 			removeOlDrawInteraction(draw2d)
 			draw2d = undefined
+			drawActivatedType.value = ''
 		}
 	}
+	updateStatus({
+		operation: OperationType.NONE,
+	})
 }
 
 const load2dData = () => {
@@ -123,7 +127,9 @@ const drawGeometryType = computed(() => {
 })
 
 watch(drawActivatedType, nVal => {
-	draw2d = addOlDrawInteraction(nVal, draw2dLayer)
+	if (nVal) {
+		draw2d = addOlDrawInteraction(nVal, draw2dLayer)
+	}
 })
 
 onMounted(() => {
@@ -151,7 +157,7 @@ onMounted(() => {
 				<el-button type="warning" class="w-full" @click="changeDimension">二/三维切换</el-button>
 			</el-col>
 			<el-col :span="12">
-				<el-button type="danger" class="w-full" @click="clearAllData">清空数据</el-button>
+				<el-button type="danger" class="w-full" @click="reset">重置</el-button>
 			</el-col>
 		</el-row>
 		<el-row :gutter="10" class="m-[5px] p-[5px]">
