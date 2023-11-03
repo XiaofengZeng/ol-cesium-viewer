@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, computed, onMounted, nextTick } from 'vue'
+import { reactive, onMounted, nextTick } from 'vue'
 import { mapCfg } from '@/configs/map'
 import useMap from '@/hooks/useMap'
 import VectorLayer from 'ol/layer/Vector'
@@ -8,7 +8,7 @@ import Style from 'ol/style/Style'
 import Fill from 'ol/style/Fill'
 // import Stroke from 'ol/style/Stroke'
 
-import { geojsonURLs, tilesetURLs } from '@/configs/map'
+import { geojsonURLs, tilesetURLs } from '@/configs/data'
 
 const {
 	initMap,

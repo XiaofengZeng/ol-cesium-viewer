@@ -2,13 +2,14 @@ import { ref, unref } from 'vue'
 import { Map, View } from 'ol'
 import Tile from 'ol/layer/Tile'
 import XYZ from 'ol/source/XYZ'
+import Style from 'ol/style/Style'
 import Fill from 'ol/style/Fill'
 import { GeoJSON } from 'ol/format'
 import OLCesium from '@/libs/olcs2.16.0/OlCesium'
-
-import { tdtURLs, olViewCfg } from '@/configs/map'
-import Style from 'ol/style/Style'
 import { Cesium3DTileset } from 'cesium'
+
+import { olViewCfg } from '@/configs/map'
+import { tdtURLs } from '../configs/data'
 
 /**
  * 加载GeoJSON数据
