@@ -1,8 +1,8 @@
 <script setup>
-import { reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, watch, computed, onMounted, nextTick } from 'vue'
 
-import Draw from 'ol/interaction/Draw'
-import { GeometryType } from '@/enums/ol'
+import { OlDrawGeometryType } from '@/enums/ol'
+import { CsDrawGeometryType } from '@/enums/cs'
 import { OperationType } from '@/enums/system'
 
 import { mapCfg } from '@/configs/map'
@@ -20,19 +20,27 @@ const {
 	addLayerToMap,
 	removeAllOlMapLayers,
 	removeAllCesiumScenePrimitives,
+	addOlDrawInteraction,
+	removeOlDrawInteraction,
 } = useMap()
 
 let map
 let draw2d
+let draw2dLayer
+
+const drawActivatedType = ref('')
 
 const currentStatus = reactive({
 	mode: mapCfg.enable3DImmediately,
-	operation: '',
+	operation: OperationType.NONE,
 })
 
 const changeDimension = () => {
+	updateStatus({
+		operation: OperationType.NONE,
+	})
 	if (draw2d) {
-		map.getOlMap().removeInteraction(draw2d)
+		removeOlDrawInteraction(draw2d)
 		draw2d = undefined
 	}
 	const pre = get3dEnabled()
@@ -75,13 +83,9 @@ const drawIn2d = () => {
 	updateStatus({
 		operation: OperationType.DRAW_2D,
 	})
-	const lyr = getOrCreateOlVectorLayer('temp_draw_vector_layer')
-	addLayerToMap(lyr)
-	draw2d = new Draw({
-		source: lyr.getSource(),
-		type: GeometryType.LineString,
-	})
-	map.getOlMap().addInteraction(draw2d)
+	draw2dLayer = getOrCreateOlVectorLayer('temp_draw_vector_layer')
+	addLayerToMap(draw2dLayer)
+	drawActivatedType.value = OlDrawGeometryType.LINE_STRING
 }
 const drawIn3d = () => {
 	updateStatus({
@@ -92,6 +96,28 @@ const drawIn3d = () => {
 const updateStatus = status => {
 	Object.assign(currentStatus, status)
 }
+
+const isDrawing = computed(() => {
+	return currentStatus.operation == OperationType.DRAW_2D || currentStatus.operation == OperationType.DRAW_3D
+})
+
+const drawGeometryType = computed(() => {
+	let type = {}
+	switch (currentStatus.operation) {
+		case OperationType.DRAW_2D:
+			type = OlDrawGeometryType
+			break
+		case OperationType.DRAW_3D:
+			type = CsDrawGeometryType
+		default:
+			break
+	}
+	return type
+})
+
+watch(drawActivatedType, nVal => {
+	draw2d = addOlDrawInteraction(nVal, draw2dLayer)
+})
 
 onMounted(() => {
 	window.addEventListener('resize', () => {
@@ -140,6 +166,15 @@ onMounted(() => {
 			<el-col :span="12">
 				<el-button type="primary" :disabled="!currentStatus.mode" class="w-full" @click="drawIn3d">三维绘制</el-button>
 			</el-col>
+		</el-row>
+		<el-row :gutter="10" class="m-[5px] p-[5px]">
+			<el-select
+				class="w-full ml-[5px] mr-[5px]"
+				v-model="drawActivatedType"
+				placeholder="Plase acitive draw operation."
+				:disabled="!isDrawing">
+				<el-option v-for="(value, index) in drawGeometryType" :key="index" :label="value" :value="value" />
+			</el-select>
 		</el-row>
 	</div>
 	<div id="map" class="w-full h-screen"></div>

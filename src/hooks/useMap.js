@@ -8,10 +8,12 @@ import XYZ from 'ol/source/XYZ'
 import Style from 'ol/style/Style'
 import Fill from 'ol/style/Fill'
 import Stroke from 'ol/style/Stroke'
+import Draw from 'ol/interaction/Draw'
 
 import OLCesium from '@/libs/olcs2.16.0/OlCesium'
 import { Cesium3DTileset } from 'cesium'
 
+import { OlDrawStatus } from '../enums/ol'
 import { olViewCfg } from '@/configs/map'
 import { tdtURLs } from '@/configs/data'
 
@@ -37,8 +39,23 @@ const fetchGeoJSON = async url => {
 		})
 }
 
+const initOlDrawInteraction = (type, layer, start = undefined, end = undefined) => {
+	const draw = new Draw({
+		source: layer.getSource(),
+		type,
+	})
+	if (start) {
+		draw.on(OlDrawStatus.DRAW_START, start)
+	}
+	if (end) {
+		draw.on(OlDrawStatus.DRAW_END, end)
+	}
+	return draw
+}
+
 export default function useMap() {
 	let map
+	let olDraw
 	const enabled3d = ref(false)
 
 	function initMap(el, opt) {
@@ -175,7 +192,7 @@ export default function useMap() {
 				source: new VectorSource({ wrapX: false }),
 				style: new Style({
 					fill: new Fill({
-						color: [0, 0, 0, 0.5],
+						color: [60, 60, 60, 0.5],
 					}),
 					stroke: new Stroke({
 						width: 3,
@@ -202,6 +219,18 @@ export default function useMap() {
 		)
 	}
 
+	function addOlDrawInteraction(type, layer, start, end) {
+		olDraw && map.getOlMap().removeInteraction(olDraw)
+		olDraw = initOlDrawInteraction(type, layer, start, end)
+		map.getOlMap().addInteraction(olDraw)
+		return olDraw
+	}
+
+	function removeOlDrawInteraction(interaction) {
+		map.getOlMap().removeInteraction(interaction)
+		olDraw = undefined
+	}
+
 	return {
 		initMap,
 		getMap,
@@ -218,5 +247,7 @@ export default function useMap() {
 		removeAllCesiumScenePrimitives,
 		removeCesiumViewerEntity,
 		removeAllCesiumViewerEntities,
+		addOlDrawInteraction,
+		removeOlDrawInteraction,
 	}
 }

@@ -8,4 +8,5 @@ export const OperationType = {
 	LOAD_3D_DATA: '三维数据加载',
 	DRAW_2D: '二维绘制',
 	DRAW_3D: '三维绘制',
+	NONE: '',
 }
